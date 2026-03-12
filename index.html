@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Improve Your Sales Game — Phase 1</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Source+Sans+Pro:wght@400;600;700&family=Source+Serif+Pro:wght@400;600&display=swap');
+
+  :root {
+    --bg-dark: #0f2847;
+    --bg-mid: #1a3a5c;
+    --bg-light: #2d5f8a;
+    --accent-blue: #7ab8e0;
+    --accent-gold: #ffd54f;
+    --green: #44803F;
+    --card-back: linear-gradient(135deg, #1a3a5c 0%, #2d5f8a 50%, #1a3a5c 100%);
+  }
+
+  html, body {
+    margin: 0; padding: 0;
+    background: linear-gradient(160deg, var(--bg-dark) 0%, var(--bg-mid) 40%, var(--bg-light) 100%);
+    min-height: 100vh;
+    font-family: 'Source Sans Pro', sans-serif;
+    color: #e0e0e0;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
+  }
+
+  #passages {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 24px 20px;
+  }
+
+  /* ---- HEADER BAR ---- */
+  .game-header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .game-header h2 { font-family: 'Playfair Display', Georgia, serif; font-size: 20px; color: #fff; margin: 0; white-space: nowrap; }
+  .progress-wrap { flex: 1; display: flex; align-items: center; gap: 10px; }
+  .progress-wrap span { font-size: 13px; color: #999; white-space: nowrap; }
+  .progress-bar { flex: 1; height: 8px; background: rgba(255,255,255,0.12); border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #2E86AB, #44803F); transition: width 0.5s ease; }
+  .token-box { display: flex; align-items: center; gap: 8px; background: var(--bg-dark); border-radius: 12px; padding: 8px 16px; }
+  .token-box .num { font-size: 20px; font-weight: 700; color: var(--accent-blue); }
+  .token-box .den { font-size: 13px; color: #5a9aba; }
+
+  /* ---- PIP INDICATOR ---- */
+  .pip-row { display: flex; justify-content: center; gap: 4px; margin-top: 20px; }
+  .pip { width: 20px; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.15); transition: background 0.3s; }
+  .pip.correct { background: #4caf50; }
+  .pip.wrong   { background: #ff9800; }
+  .pip.current { background: #fff; }
+
+  /* ---- MAIN LAYOUT ---- */
+  .play-area { display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap; justify-content: center; }
+  .card-col { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; max-width: 320px; }
+  .choose-col { flex: 1; min-width: 0; max-width: 420px; animation: fadeUp 0.4s ease-out; width: 100%; }
+
+  /* ---- CARD ---- */
+  .card-container { width: 100%; max-width: 280px; min-height: 440px; perspective: 800px; cursor: pointer; }
+  .card-inner { width: 100%; min-height: 440px; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); }
+  .card-inner.flipped { transform: rotateY(180deg); }
+  .card-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 16px; overflow: hidden; }
+  .card-back {
+    background: var(--card-back); border: 3px solid var(--bg-dark);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); min-height: 440px;
+  }
+  .card-back .label { color: var(--accent-blue); font-family: 'Playfair Display', Georgia, serif; font-size: 16px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
+  .card-front {
+    transform: rotateY(180deg); background: #f0f5f0; border: 3px solid var(--bg-mid);
+    display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  }
+  .card-image { width: 100%; aspect-ratio: 750/500; overflow: hidden; flex-shrink: 0; }
+  .card-image img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+  .card-title-bar { background: #4a6741; padding: 10px 16px; display: flex; align-items: center; gap: 10px; }
+  .card-title-bar .title { color: #fff; font-family: 'Playfair Display', Georgia, serif; font-size: 18px; font-weight: 700; }
+  .card-body { padding: 16px; flex: 1; font-family: 'Source Serif Pro', Georgia, serif; font-size: 14px; line-height: 1.6; color: #2a2a2a; white-space: pre-line; }
+
+  /* ---- STAGE BUTTONS ---- */
+  .stage-btn {
+    display: flex; flex-direction: column; align-items: flex-start;
+    padding: 10px 14px; border-radius: 10px; border: 2px solid #d0d5dd; background: #fff;
+    cursor: pointer; transition: all 0.2s; text-align: left; width: 100%; margin-bottom: 8px;
+  }
+  .stage-btn:hover { border-color: #999; }
+  .stage-btn .row { display: flex; align-items: center; gap: 8px; width: 100%; }
+  .stage-btn .dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; flex-shrink: 0; }
+  .stage-btn .name { font-size: 14px; font-weight: 700; }
+  .stage-btn .desc { font-size: 11px; color: #666; margin-top: 2px; margin-left: 18px; }
+
+  .submit-btn {
+    margin-top: 16px; padding: 12px 32px; border-radius: 10px;
+    color: #fff; border: none; font-size: 16px; font-weight: 700;
+    cursor: pointer; width: 100%; transition: all 0.2s;
+  }
+  .submit-btn:disabled { background: #555; cursor: not-allowed; }
+  .submit-btn:not(:disabled) { background: linear-gradient(135deg, #44803F, #5a9e52); }
+
+  /* ---- FEEDBACK ---- */
+  .feedback { border-radius: 14px; padding: 20px; animation: fadeUp 0.4s ease-out; }
+  .feedback.correct { background: #e8f5e9; border: 2px solid #4caf50; }
+  .feedback.wrong   { background: #fff3e0; border: 2px solid #ff9800; }
+  .feedback .fb-title { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .feedback .fb-title span:last-child { font-family: 'Playfair Display', Georgia, serif; font-size: 20px; font-weight: 700; }
+  .feedback.correct .fb-title span:last-child { color: #2e7d32; }
+  .feedback.wrong .fb-title span:last-child { color: #e65100; }
+  .feedback p { font-family: 'Source Serif Pro', Georgia, serif; font-size: 14px; line-height: 1.7; color: #333; }
+  .next-btn { margin-top: 14px; padding: 10px 28px; border-radius: 10px; background: var(--bg-mid); color: #fff; border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+  .next-btn:hover { background: var(--bg-light); }
+
+  /* ---- HINT ---- */
+  .hint-box { background: rgba(255,213,77,0.1); border: 1px dashed rgba(255,213,77,0.4); border-radius: 10px; padding: 12px; width: 100%; max-width: 280px; font-size: 13px; color: var(--accent-gold); line-height: 1.6; animation: fadeUp 0.4s ease-out; }
+  .scaffold-badge { background: rgba(255,213,77,0.12); border: 1px solid rgba(255,213,77,0.3); border-radius: 10px; padding: 8px 14px; font-size: 13px; color: var(--accent-gold); width: 100%; max-width: 280px; text-align: center; }
+
+  /* ---- INTRO ---- */
+  .intro-wrap { text-align: center; max-width: 520px; margin: 60px auto; animation: fadeUp 0.6s ease-out; }
+  .intro-wrap h1 { font-family: 'Playfair Display', Georgia, serif; font-size: 32px; color: #fff; margin: 12px 0 8px; }
+  .intro-wrap .sub { font-size: 16px; color: var(--accent-blue); line-height: 1.7; margin-bottom: 28px; }
+  .stages-box { background: rgba(255,255,255,0.08); border-radius: 14px; padding: 20px; margin-bottom: 28px; text-align: left; }
+  .stages-box .label { color: #b0c4d8; font-size: 14px; line-height: 1.7; margin-bottom: 12px; }
+  .stage-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; margin: 3px; }
+  .stage-num { width: 18px; height: 18px; border-radius: 50%; color: #fff; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; }
+  .start-btn { padding: 14px 48px; border-radius: 12px; background: linear-gradient(135deg, #44803F, #5a9e52); color: #fff; border: none; font-size: 18px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 20px rgba(68,128,63,0.4); animation: pulse 2s infinite; }
+
+  /* ---- SUMMARY ---- */
+  .summary-wrap { max-width: 560px; margin: 40px auto; animation: fadeUp 0.6s ease-out; }
+  .summary-header { text-align: center; margin-bottom: 28px; }
+  .summary-header h1 { font-family: 'Playfair Display', Georgia, serif; font-size: 30px; color: #fff; margin: 12px 0 4px; }
+  .summary-header .tokens { color: var(--accent-blue); font-size: 16px; }
+  .summary-bar { width: 180px; max-width: 80%; height: 8px; background: rgba(255,255,255,0.15); border-radius: 4px; margin: 12px auto; overflow: hidden; }
+  .summary-bar-fill { height: 100%; border-radius: 4px; }
+  .result-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .result-row:last-child { border-bottom: none; }
+  .result-row .card-name { flex: 1; font-size: 13px; color: #b0c4d8; }
+  .result-row .wrong-tag { font-size: 12px; color: #ff9800; }
+  .result-row .stage-tag-sm { font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 10px; }
+  .results-box { background: rgba(255,255,255,0.06); border-radius: 14px; padding: 16px; }
+  .results-box h3 { color: #fff; font-size: 15px; margin: 0 0 12px 0; }
+  .btn-row { text-align: center; margin-top: 24px; }
+  .retry-btn { padding: 12px 36px; border-radius: 10px; background: rgba(255,255,255,0.1); color: var(--accent-blue); border: 1px solid rgba(122,184,224,0.3); font-size: 15px; font-weight: 600; cursor: pointer; margin-right: 12px; }
+  .phase2-btn { padding: 12px 36px; border-radius: 10px; color: #fff; border: none; font-size: 15px; font-weight: 600; }
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.05); } }
+
+  /* ---- MOBILE ---- */
+  @media (max-width: 600px) {
+    #passages { padding: 12px 10px; }
+    .game-header { flex-direction: column; align-items: stretch; gap: 8px; }
+    .game-header h2 { font-size: 17px; text-align: center; }
+    .token-box { justify-content: center; }
+    .play-area { flex-direction: column; align-items: center; gap: 16px; }
+    .card-col { max-width: 100%; }
+    .card-container { max-width: 260px; min-height: 400px; }
+    .card-inner { min-height: 400px; }
+    .card-body { font-size: 13px; padding: 12px; }
+    .card-title-bar .title { font-size: 16px; }
+    .choose-col { max-width: 100%; }
+    .stage-btn { padding: 12px 14px; min-height: 48px; }
+    .submit-btn { padding: 14px 24px; font-size: 17px; min-height: 48px; }
+    .next-btn { padding: 12px 24px; font-size: 16px; min-height: 48px; width: 100%; }
+    .intro-wrap { margin: 20px auto; }
+    .intro-wrap h1 { font-size: 26px; }
+    .intro-wrap .sub { font-size: 14px; }
+    .start-btn { padding: 14px 36px; font-size: 17px; width: 100%; }
+    .summary-wrap { margin: 16px auto; }
+    .summary-header h1 { font-size: 24px; }
+    .result-row { flex-wrap: wrap; gap: 4px; }
+    .result-row .card-name { min-width: 60%; }
+    .btn-row { display: flex; flex-direction: column; gap: 10px; }
+    .retry-btn, .phase2-btn { width: 100%; margin-right: 0; }
+    .feedback { padding: 14px; }
+    .feedback .fb-title span:last-child { font-size: 17px; }
+    .feedback p { font-size: 13px; }
+    .hint-box, .scaffold-badge { max-width: 100%; }
+    .pip-row { flex-wrap: wrap; }
+    .pip { width: 16px; height: 5px; }
+  }
+  @media (hover: none) and (pointer: coarse) {
+    .stage-btn { min-height: 52px; }
+    .stage-btn:active { transform: scale(0.98); }
+    .card-container:active { transform: scale(0.97); }
+    .submit-btn:active, .next-btn:active, .start-btn:active { opacity: 0.85; }
+  }
+  @media (min-width: 601px) and (max-width: 900px) {
+    .card-container { max-width: 260px; }
+    .choose-col { min-width: 240px; }
+  }
+</style>
+</head>
+<body>
+<div id="passages"></div>
+
+<script>
+// ============================================================
+// CONFIG — change this to your GitHub Pages base URL
+// ============================================================
+const IMG_BASE = "img/";
+
+const SALES_STAGES = [
+  { id:"prospecting", label:"Prospecting", color:"#2E86AB", desc:"Finding and reaching out to potential customers" },
+  { id:"preapproach", label:"Pre-approach", color:"#A23B72", desc:"Researching prospects before contact" },
+  { id:"needs", label:"Needs Analysis", color:"#F18F01", desc:"Discovering the customer's pain points" },
+  { id:"presentation", label:"Presentation", color:"#C73E1D", desc:"Demonstrating your solution's value" },
+  { id:"objections", label:"Handling Objections", color:"#3B1F2B", desc:"Addressing customer concerns" },
+  { id:"closing", label:"Closing", color:"#44803F", desc:"Securing the commitment or agreement" },
+  { id:"followup", label:"Follow-up", color:"#5B5EA6", desc:"Maintaining the relationship post-sale" },
+];
+
+const CARDS = [
+  { id:1, img:IMG_BASE+"card_01.jpg", title:"A Sudden Call", stage:"prospecting", emoji:"📞",
+    text:`You're a salesperson for a SaaS company. You find a list of local businesses that fit your ideal customer profile and begin calling them, saying, 'Hi, we help businesses like yours streamline their workflow. Are you available for a brief chat?'`,
+    hint:"This card shows the very first step — reaching out to people who might become customers. Which stage is about finding new leads?" },
+  { id:2, img:IMG_BASE+"card_02.jpg", title:"The Deep Dive", stage:"preapproach", emoji:"🔍",
+    text:`"Oh, I need to research about the company to give me a better understanding of what they might need. I'll look it up on the company page, study their press releases, and read their reviews."`,
+    hint:"The salesperson is preparing before making contact. What stage involves gathering information about prospects?" },
+  { id:3, img:IMG_BASE+"card_03.jpg", title:"Is this your problem?", stage:"needs", emoji:"🎯",
+    text:`You start your conversation with a prospect by saying, 'I've noticed many companies in your industry are struggling with CRM. Is that a challenge you're facing, and how are you currently addressing it?'` },
+  { id:4, img:IMG_BASE+"card_04.jpg", title:"We have this...and this...", stage:"presentation", emoji:"😵",
+    text:`"Our software solution is really advanced, we got machine learning algorithms, 256-bit encryption, API supports, and other integrations."\n— Uh, sorry, I am totally lost...` },
+  { id:5, img:IMG_BASE+"card_05.jpg", title:"This is how it can help...", stage:"presentation", emoji:"💡",
+    text:`After explaining a key feature of your software, you ask, 'Does that sound like something that would be helpful in your current workflow?'` },
+  { id:6, img:IMG_BASE+"card_06.jpg", title:"Lukewarm Reception", stage:"objections", emoji:"😐",
+    text:`You've finished your presentation, but the prospect just nods and avoids eye contact.` },
+  { id:7, img:IMG_BASE+"card_07.jpg", title:"But I...", stage:"objections", emoji:"🤝",
+    text:`— "Your software is too expensive."\n"I understand that cost is a concern. However, when you factor in the increased productivity and reduced errors, our clients typically see a full return on investment within six months. Would you like to see a case study?"` },
+  { id:8, img:IMG_BASE+"card_08.jpg", title:"Looking Good?", stage:"closing", emoji:"📋",
+    text:`After addressing a concern about implementation time, you ask, 'Does that timeline fit with your company's rollout plans?'` },
+  { id:9, img:IMG_BASE+"card_09.jpg", title:"Let's sign this...", stage:"closing", emoji:"✍️",
+    text:`You say, 'Great! It sounds like we're ready to get started. I'll just need your signature here to finalize the agreement.'` },
+  { id:10, img:IMG_BASE+"card_10.jpg", title:"How are you doing?", stage:"followup", emoji:"📱",
+    text:`A week after the software implementation, you call the client to ask, 'How is the team adapting to the new system? Are there any questions I can answer or any additional training we can provide?'` },
+];
+
+const SCAFFOLD_COUNT = 2;
+
+// ---- DATA LOGGING (Google Sheets webhook — replace URL) ----
+const LOG_ENDPOINT = ""; // Set your Google Sheets Apps Script URL here
+function logEvent(eventType, data) {
+  if (!LOG_ENDPOINT) return;
+  const payload = {
+    timestamp: new Date().toISOString(),
+    participantId: state.participantId,
+    event: eventType,
+    ...data
+  };
+  navigator.sendBeacon(LOG_ENDPOINT, JSON.stringify(payload));
+}
+
+// ---- STATE ----
+let state = {
+  deck: [], cardIndex: 0, tokens: 0,
+  results: [], flipped: false, selected: null, submitted: false,
+  participantId: "P_" + Math.random().toString(36).substr(2, 8),
+  startTime: null,
+};
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getStage(id) { return SALES_STAGES.find(s => s.id === id); }
+
+// ============================================================
+// PASSAGES
+// ============================================================
+
+function renderPassage(name) {
+  const el = document.getElementById('passages');
+  el.innerHTML = '';
+  window.scrollTo(0, 0);
+  switch(name) {
+    case 'Start': renderStart(el); break;
+    case 'DrawCard': renderDrawCard(el); break;
+    case 'Feedback': renderFeedback(el); break;
+    case 'Summary': renderSummary(el); break;
+  }
+}
+
+function renderStart(el) {
+  const stagesHTML = SALES_STAGES.map((s,i) =>
+    `<span class="stage-tag" style="background:${s.color}30;color:${s.color};border:1px solid ${s.color}50">
+      <span class="stage-num" style="background:${s.color}">${i+1}</span>${s.label}
+    </span>`
+  ).join('');
+  el.innerHTML = `
+    <div class="intro-wrap">
+      <div style="font-size:64px">🃏</div>
+      <h1>Phase 1: Lead Collection</h1>
+      <p class="sub">
+        You'll be shown 10 cards, each depicting a moment in the sales process.
+        Your task is to <strong style="color:#fff">classify each card</strong> into
+        the correct stage of the sales funnel. Earn <strong style="color:#ffd54f">Lead Tokens</strong> for
+        each correct classification!
+      </p>
+      <div class="stages-box">
+        <p class="label"><strong style="color:#fff">The 7 Stages of Selling:</strong></p>
+        <div>${stagesHTML}</div>
+      </div>
+      <p style="color:#5a9aba;font-size:13px;margin-bottom:20px;font-style:italic">
+        The first 2 cards will include hints to help you get started.
+      </p>
+      <button class="start-btn" onclick="startGame()">Start Drawing Cards</button>
+    </div>`;
+}
+
+function startGame() {
+  state = { ...state, deck: shuffle(CARDS), cardIndex: 0, tokens: 0, results: [], flipped: false, selected: null, submitted: false, startTime: Date.now() };
+  logEvent("game_start", { deckOrder: state.deck.map(c => c.id) });
+  renderPassage('DrawCard');
+}
+
+function renderDrawCard(el) {
+  const card = state.deck[state.cardIndex];
+  const isScaffolded = state.cardIndex < SCAFFOLD_COUNT;
+  state.cardDrawTime = Date.now();
+  el.innerHTML = `
+    ${headerHTML()}
+    <div class="play-area">
+      <div class="card-col">
+        ${isScaffolded ? `<div class="scaffold-badge">🎓 Guided card (${state.cardIndex+1} of ${SCAFFOLD_COUNT}) — hints available</div>` : ''}
+        <div class="card-container" onclick="flipCard()">
+          <div class="card-inner" id="card-inner">
+            <div class="card-face card-back">
+              <div style="font-size:48px">🃏</div>
+              <div class="label">Draw Card</div>
+            </div>
+            <div class="card-face card-front">
+              <div class="card-image"><img src="${card.img}" alt="${card.title}"></div>
+              <div class="card-title-bar">
+                <span class="title">${card.title}</span>
+              </div>
+              <div class="card-body">${card.text}</div>
+            </div>
+          </div>
+        </div>
+        <p style="color:#5a9aba;font-size:14px;font-style:italic" id="draw-hint">Click the card to draw</p>
+      </div>
+      <div class="choose-col" id="classify-area" style="display:none"></div>
+    </div>
+    ${pipsHTML()}`;
+}
+
+function flipCard() {
+  if (state.flipped) return;
+  state.flipped = true;
+  state.flipTime = Date.now();
+  document.getElementById('card-inner').classList.add('flipped');
+  document.getElementById('draw-hint').style.display = 'none';
+  setTimeout(() => {
+    const area = document.getElementById('classify-area');
+    area.style.display = 'block';
+    renderClassifyPanel(area);
+  }, 400);
+}
+
+function renderClassifyPanel(el) {
+  const card = state.deck[state.cardIndex];
+  const isScaffolded = state.cardIndex < SCAFFOLD_COUNT;
+  const btns = SALES_STAGES.map(s => `
+    <button class="stage-btn" id="btn-${s.id}" onclick="selectStage('${s.id}')">
+      <div class="row">
+        <div class="dot" id="dot-${s.id}"></div>
+        <span class="name" style="color:${s.color}">${s.label}</span>
+      </div>
+      <span class="desc">${s.desc}</span>
+    </button>`).join('');
+  el.innerHTML = `
+    <h3 style="font-family:'Playfair Display',Georgia,serif;font-size:18px;color:#fff;margin:0 0 12px">
+      Which sales stage does this card belong to?
+    </h3>
+    ${btns}
+    <button class="submit-btn" id="submit-btn" disabled onclick="submitClassification()">Classify Card</button>
+    ${isScaffolded && card.hint ? `<div class="hint-box" style="margin-top:14px">💡 <strong>Hint:</strong> ${card.hint}</div>` : ''}`;
+}
+
+function selectStage(id) {
+  if (state.submitted) return;
+  state.selected = id;
+  SALES_STAGES.forEach(s => {
+    const btn = document.getElementById('btn-' + s.id);
+    const dot = document.getElementById('dot-' + s.id);
+    if (s.id === id) {
+      btn.style.borderColor = s.color; btn.style.background = s.color + '15'; dot.style.background = s.color;
+    } else {
+      btn.style.borderColor = '#d0d5dd'; btn.style.background = '#fff'; dot.style.background = '#ccc';
+    }
+  });
+  document.getElementById('submit-btn').disabled = false;
+}
+
+function submitClassification() {
+  if (!state.selected || state.submitted) return;
+  state.submitted = true;
+  const card = state.deck[state.cardIndex];
+  const correct = state.selected === card.stage;
+  const responseTime = Date.now() - state.flipTime;
+  if (correct) state.tokens++;
+  state.results.push({ card, chosen: state.selected, correct });
+  logEvent("card_classify", { cardId: card.id, cardTitle: card.title, correctStage: card.stage, chosenStage: state.selected, correct, responseTimeMs: responseTime, cardIndex: state.cardIndex });
+
+  const area = document.getElementById('classify-area');
+  const stage = getStage(card.stage);
+  const isLast = state.cardIndex >= state.deck.length - 1;
+  const explanations = {
+    prospecting: "This is the initial outreach to find potential customers.",
+    preapproach: "This involves researching prospects before making contact.",
+    needs: "Here, the salesperson is uncovering the customer's pain points and requirements.",
+    presentation: "At this stage, the salesperson is showing how their solution addresses the customer's needs.",
+    objections: "The customer is expressing concerns or resistance that need to be addressed.",
+    closing: "The salesperson is working toward securing a commitment from the customer.",
+    followup: "After the sale, maintaining the relationship ensures long-term success."
+  };
+  area.innerHTML = `
+    <div class="feedback ${correct ? 'correct' : 'wrong'}">
+      <div class="fb-title">
+        <span style="font-size:28px">${correct ? '✅' : '🔄'}</span>
+        <span>${correct ? 'Correct! +1 Lead Token' : "Not quite — let's learn from this"}</span>
+      </div>
+      <p><strong>"${card.title}"</strong> belongs to the <strong style="color:${stage.color}">${stage.label}</strong> stage.
+        ${correct ? " Great recognition of where this fits in the sales process!" : " " + explanations[card.stage]}</p>
+      <button class="next-btn" onclick="nextCard()">${isLast ? 'See Results →' : 'Next Card →'}</button>
+    </div>`;
+  document.getElementById('token-count').textContent = state.tokens;
+  updatePips();
+}
+
+function nextCard() {
+  if (state.cardIndex >= state.deck.length - 1) {
+    logEvent("game_complete", { tokens: state.tokens, totalCards: CARDS.length, totalTimeMs: Date.now() - state.startTime, results: state.results.map(r => ({ cardId: r.card.id, correct: r.correct, chosen: r.chosen })) });
+    renderPassage('Summary');
+    return;
+  }
+  state.cardIndex++;
+  state.flipped = false;
+  state.selected = null;
+  state.submitted = false;
+  renderPassage('DrawCard');
+}
+
+function renderSummary(el) {
+  const pct = Math.round((state.tokens / CARDS.length) * 100);
+  const icon = pct >= 80 ? '🏆' : pct >= 50 ? '👍' : '📚';
+  const barColor = pct >= 80 ? '#4caf50' : pct >= 50 ? '#ffc107' : '#ff9800';
+  const msg = pct >= 80 ? "Excellent understanding of the sales process! You're ready for Phase 2."
+    : pct >= 50 ? "Good effort! Review the stages below before moving on."
+    : "Keep studying the sales stages — understanding them is key to sales success.";
+  const rows = state.results.map(r => {
+    const cs = getStage(r.card.stage);
+    const ch = getStage(r.chosen);
+    return `<div class="result-row">
+      <span style="font-size:18px;width:24px">${r.correct ? '✅' : '❌'}</span>
+      <img src="${r.card.img}" style="width:32px;height:32px;border-radius:6px;object-fit:cover;object-position:top center;flex-shrink:0">
+      <span class="card-name">${r.card.title}</span>
+      ${!r.correct ? `<span class="wrong-tag">You chose: ${ch.label}</span>` : ''}
+      <span class="stage-tag-sm" style="color:${cs.color};background:${cs.color}20">${cs.label}</span>
+    </div>`;
+  }).join('');
+  el.innerHTML = `
+    <div class="summary-wrap">
+      <div class="summary-header">
+        <div style="font-size:56px">${icon}</div>
+        <h1>Phase 1 Complete!</h1>
+        <p class="tokens">You earned <strong style="color:#ffd54f">${state.tokens} Lead Tokens</strong> out of ${CARDS.length}</p>
+        <div class="summary-bar"><div class="summary-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+        <p style="color:#b0c4d8;font-size:14px">${msg}</p>
+      </div>
+      <div class="results-box"><h3>Your Results</h3>${rows}</div>
+      <div class="btn-row">
+        <button class="retry-btn" onclick="startGame()">🔄 Try Again</button>
+        <button class="phase2-btn" style="background:${pct>=50 ? 'linear-gradient(135deg,#44803F,#5a9e52)' : '#555'};cursor:${pct>=50?'pointer':'not-allowed'};opacity:${pct>=50?1:0.5}" ${pct<50?'disabled':''}>Phase 2: Sales Roleplay →</button>
+      </div>
+    </div>`;
+}
+
+// ---- HELPERS ----
+function headerHTML() {
+  return `<div class="game-header">
+    <h2>🃏 Phase 1: Lead Collection</h2>
+    <div class="progress-wrap">
+      <span>Card ${state.cardIndex+1} of ${state.deck.length}</span>
+      <div class="progress-bar"><div class="progress-fill" style="width:${((state.cardIndex+1)/state.deck.length)*100}%"></div></div>
+    </div>
+    <div class="token-box">
+      <span style="font-size:22px">🪙</span>
+      <span class="num" id="token-count">${state.tokens}</span>
+      <span class="den">/ ${state.deck.length}</span>
+    </div>
+  </div>`;
+}
+function pipsHTML() {
+  return `<div class="pip-row" id="pip-row">${state.deck.map((_,i) => {
+    let cls = 'pip';
+    if (i < state.results.length) cls += state.results[i].correct ? ' correct' : ' wrong';
+    else if (i === state.cardIndex) cls += ' current';
+    return `<div class="${cls}"></div>`;
+  }).join('')}</div>`;
+}
+function updatePips() {
+  const row = document.getElementById('pip-row');
+  if (!row) return;
+  row.innerHTML = state.deck.map((_,i) => {
+    let cls = 'pip';
+    if (i < state.results.length) cls += state.results[i].correct ? ' correct' : ' wrong';
+    else if (i === state.cardIndex) cls += ' current';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+}
+
+// ---- BOOT ----
+renderPassage('Start');
+</script>
+</body>
+</html>
